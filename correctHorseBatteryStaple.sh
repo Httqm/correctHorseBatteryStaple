@@ -3,25 +3,17 @@
 # Password generator inspired by : https://www.xkcd.com/936/
 ########################################## ##########################################################
 
-
-##########################################
-# config
-##########################################
 nameOfthisScript="${BASH_SOURCE[0]}"
 numberOfWordsInPassword=4
 
 
-##########################################
-# functions
-##########################################
-
 usage() {
-	cat <<EOF
+	cat << EOF
 usage : $nameOfthisScript <language>
 
 	language :
-		'en' : use an english dictionary
-		'fr' : use a french dictionary
+		'en' : use an english dictionary (default)
+		'fr' : use a  french  dictionary
 EOF
 	}
 
@@ -39,32 +31,35 @@ generateRandomNumbers() {
 	}
 
 
-########################################## ##########################################################
-# main()
-########################################## ##########################################################
+getDictionaryFile() {
+	local language=$1
+	local dictionaryFile
+	case "$language" in
+		'en')
+			dictionaryFile='./words_alpha.txt'
+			;;
+		'fr')
+			dictionaryFile='./336531 mots de la langue française.txt'
+			;;
+		*)
+			usage
+			exit 1
+			;;
+	esac
+	echo "$dictionaryFile"
+	}
 
-language=${1:-en}
-case "$language" in
-	'en')
-		dictionaryFile='./words_alpha.txt'
-		;;
-	'fr')
-		dictionaryFile='./336531 mots de la langue française.txt'
-		;;
-	*)
-		usage
-		exit 1
-		;;
-esac
+main() {
+	local language=${1:-en}
+	local dictionaryFile=$(getDictionaryFile "$language")
 
-nbAvailableWords=$(countDictionaryWords "$dictionaryFile")
-GeneratedPassword=''
-for i in $(generateRandomNumbers "$nbAvailableWords" "$numberOfWordsInPassword"); do
-	GeneratedPassword+=$(sed -n "$i p" "$dictionaryFile")' '
-done
-echo -e "$GeneratedPassword"
+	nbAvailableWords=$(countDictionaryWords "$dictionaryFile")
+	GeneratedPassword=''
+	for i in $(generateRandomNumbers "$nbAvailableWords" "$numberOfWordsInPassword"); do
+		GeneratedPassword+=$(sed -n "$i p" "$dictionaryFile")' '
+	done
+	echo -e "$GeneratedPassword"
+	}
 
 
-########################################## ##########################################################
-# the end
-########################################## ##########################################################
+main "$@"
