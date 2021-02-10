@@ -49,6 +49,15 @@ getDictionaryFile() {
 	echo "$dictionaryFile"
 	}
 
+
+computeNumberOfCombinations() {
+	local nbWordsInDictionary=$1
+	local nbWordsInPassword=$2
+	numberOfCombinations=$(echo "$nbWordsInDictionary^$nbWordsInPassword" | bc | sed -r ': repeat s/([0-9]+)([0-9]{3})(\,|$)/\1,\2/; t repeat')
+	echo -e "\n(1 out of $numberOfCombinations combinations)"
+	}
+
+
 main() {
 	local language=${1:-en}
 	local dictionaryFile=$(getDictionaryFile "$language")
@@ -59,6 +68,7 @@ main() {
 		GeneratedPassword+=$(sed -n "$i p" "$dictionaryFile")' '
 	done
 	echo -e "$GeneratedPassword"
+	computeNumberOfCombinations "$nbAvailableWords" "$numberOfWordsInPassword"
 	}
 
 
