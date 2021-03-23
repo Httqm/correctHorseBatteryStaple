@@ -1,19 +1,28 @@
 #!/usr/bin/env bash
 ######################################### correctHorseBatteryStaple.sh ##############################
 # Password generator inspired by : https://www.xkcd.com/936/
+#
+# Number of 4-words combinations :
+#   EN :   18,761,676,639,977,538,579,601
+#   FR :   12,826,267,821,863,253,109,521
+# both :  249,326,411,234,100,657,610,000
 ########################################## ##########################################################
 
 nameOfthisScript="${BASH_SOURCE[0]}"
-numberOfWordsInPassword=4
+minimumNumberOfWordsInPassword=4
 
 
 usage() {
 	cat << EOF
-usage : $nameOfthisScript <language>
+usage : $nameOfthisScript <language> <number of words in passphrase>
 
 	language :
-		'en' : use an english dictionary (default)
-		'fr' : use a  french  dictionary
+		'en'   : use an english dictionary (default)
+		'fr'   : use a  french  dictionary
+		'both' : combine english and french dictionaries for even more combinations
+	number of words in passphrase :
+		any number in the range 1..99
+		defaults to 4
 EOF
 	}
 
@@ -34,12 +43,21 @@ generateRandomNumbers() {
 getDictionaryFile() {
 	local language=$1
 	local dictionaryFile
+
+	dictionaryFileEnglish='./words_alpha.txt'
+	dictionaryFileFrench='./336531 mots de la langue française.txt'
+	dictionaryFileBoth='./frenchPlusEnglish.txt'
 	case "$language" in
 		'en')
-			dictionaryFile='./words_alpha.txt'
+			dictionaryFile="$dictionaryFileEnglish"
 			;;
 		'fr')
-			dictionaryFile='./336531 mots de la langue française.txt'
+			dictionaryFile="$dictionaryFileFrench"
+			;;
+		'both')
+			cp "$dictionaryFileEnglish" "$dictionaryFileBoth"
+			cat "$dictionaryFileFrench" >> "$dictionaryFileBoth"
+			dictionaryFile="$dictionaryFileBoth"
 			;;
 		*)
 			usage
@@ -58,8 +76,31 @@ computeNumberOfCombinations() {
 	}
 
 
+checkArg() {
+	local argToCheck="$1"
+	local value="$2"
+	case "$argToCheck" in
+		language)
+			acceptableValues='en fr both'
+			[[ "$value" =~ ^(en|fr|both)$ ]] || { echo "Wrong language : '$value'"; usage; exit 1; }
+			;;
+		nbWords)
+			# https://stackoverflow.com/questions/806906/how-do-i-test-if-a-variable-is-a-number-in-bash/13089269#13089269
+			# http://www.gnu.org/savannah-checkouts/gnu/bash/manual/bash.html#Pattern-Matching
+			[[ "$value" == ?(-)+([[:digit:]]) ]] || { echo "Not a number : '$value'"; usage; exit 1; }
+			[ "$value" -lt 1 -o "$value" -gt 99 ] && { echo "Wrong number of words : '$value'"; usage; exit 1; }
+			;;
+	esac
+	}
+
+
 main() {
 	local language=${1:-en}
+	checkArg language "$language"
+
+	local numberOfWordsInPassword=${2:-$minimumNumberOfWordsInPassword}
+	checkArg nbWords "$numberOfWordsInPassword"
+
 	local dictionaryFile=$(getDictionaryFile "$language")
 
 	nbAvailableWords=$(countDictionaryWords "$dictionaryFile")
